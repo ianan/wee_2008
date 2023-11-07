@@ -4,6 +4,7 @@ pro rhessi_weeflares_results
   ;
   ;  ;    28-Apr-2023 IGH
   ;  ;    04-May-2023 Added more info to output genx
+  ;  ;    07-Nov-2023 Added time info to output genx
   ;  ;
   ;  ;
   ;;; *******************************************
@@ -11,66 +12,74 @@ pro rhessi_weeflares_results
   ;;; *******************************************
   ;;; *******************************************
   
-  ;  ; GOES temps results
-  ;  restgen,file='goes_tem_all',tems
-  ;
-  ;  ; RHESSI results
-  ;  restgen,file='mf_fin_newel',res
-  ;
-  ;  ; Other data sources for filtering events
-  ;  restore, file='modflux_48.dat'
-  ;  rat=nn/th
-  ;  lf=linfit(alog10([1d44,1d49]),alog10([1.5d45,3d49]))
-  ;  gfit=10d^(lf[0]+lf[1]*alog10(res.osx_p[0]*1d49))
-  ;  restgen,file='sig2back',bs
-  ;
-  ;  ; Filter for the "good" events
-  ;  gdth=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 and $
-  ;    res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e2 and bs.sb48 gt 3.0 and $
-  ;    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 and $
-  ;    res.bk_bf_flag eq 1,ngdth)
-  ;  gdnn=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
-  ;    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e-2 and $
-  ;    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and $
-  ;    res.osx_p[3] ne 1e-5 and bs.sb612 gt 3.0 and $
-  ;    res.osx_p[5] ne 20 and res.osx_p[5] gt 7.2 and abs(res.osx_p[5]-7.16) gt 0.1 and res.osx_p[5] ne 9. and $
-  ;    res.osx_p[6] ne 2 and res.osx_p[6] ne 12 and res.vf_lpwid gt 2.3 and $
-  ;    res.bk_bf_flag eq 1,ngdnn)
-  ;
-  ;  ;  Added in GOES restrictiond of "good" events
-  ;  gsgdth=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
-  ;    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e2 and $
-  ;    res.osx_p[1] gt 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 $
-  ;    and res.bk_bf_flag eq 1 and res.gflx_bs gt 0. and bs.sb48 gt 3. and $
-  ;    tems.em ne tems[1].em and tems.tmk gt 4.0 and tems.tmk lt 20. and tems.bsub eq 1$
-  ;    and tems.em lt gfit ,ngd)
-  ;  gsgdnn=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
-  ;    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e-2 and $
-  ;    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 $
-  ;    and res.gflx_bs gt 0. and bs.sb48 gt 3. and $
-  ;    tems.em ne tems[1].em and tems.tmk gt 4.0 and tems.tmk lt 20. and tems.bsub eq 1$
-  ;    and tems.em lt gfit and res.osx_p[3] ne 1e-5 and bs.sb612 gt 3.0 and $
-  ;    res.osx_p[5] ne 20 and res.osx_p[5] gt 7.2 and abs(res.osx_p[5]-7.16) gt 0.1 and res.osx_p[5] ne 9. and $
-  ;    res.osx_p[6] ne 2 and res.osx_p[6] ne 12,ngdnn)
-  ;
-  ;  ec=eb2ec(res.osx_p[5],res.osx_p[6])
-  ;
-  ;  nf=n_elements(res.osx_p[3])
-  ;  ph4_8=dblarr(nf)
-  ;  ph12=dblarr(nf)
-  ;  for i=0, nf-1 do begin
-  ;    ph4_8[i]=f_vth([4,8],[res[i].osx_p[0],res[i].osx_p[1]*0.086164])
-  ;    ph12[i]=f_bpow([12.],res[i].osx_p[3:6])
-  ;  endfor
-  ;
-  ;  rr={tmk:res.osx_p[1],em:res.osx_p[0]*1d49,$
-  ;    norm:res.osx_p[3],g1:1.5,eb:res.osx_p[5],g2:res.osx_p[6],$
-  ;    ec:ec,ph4_8:ph4_8,ph12:ph12,vol:res.vf_vol,vflx4_8:res.vf_fit.srcflux,vx:res.vf_fit.srcx,vy:res.vf_fit.srcy,$
-  ;    gflx_bs:res.gflx_bs,gtmk:tems.tmk,gem:tems.em,$
-  ;    eng_th:res.eng_th,eng_nn:res.eng_nn,$
-  ;    idgdth:gdth,idgdnn:gdnn,idgsgdth:gsgdth,idgsgdnn:gsgdnn}
-  ;
-  ;  savegen,file='wee_all.genx',rr
+  ; GOES temps results
+  restgen,file='goes_tem_all',tems
+
+  ; RHESSI results
+  restgen,file='mf_fin_newel',res
+
+  ; Other data sources for filtering events
+  restore, file='modflux_48.dat'
+  rat=nn/th
+  lf=linfit(alog10([1d44,1d49]),alog10([1.5d45,3d49]))
+  gfit=10d^(lf[0]+lf[1]*alog10(res.osx_p[0]*1d49))
+  restgen,file='sig2back',bs
+
+  ; Filter for the "good" events
+  gdth=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 and $
+    res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e2 and bs.sb48 gt 3.0 and $
+    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 and $
+    res.bk_bf_flag eq 1,ngdth)
+  gdnn=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
+    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e-2 and $
+    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and $
+    res.osx_p[3] ne 1e-5 and bs.sb612 gt 3.0 and $
+    res.osx_p[5] ne 20 and res.osx_p[5] gt 7.2 and abs(res.osx_p[5]-7.16) gt 0.1 and res.osx_p[5] ne 9. and $
+    res.osx_p[6] ne 2 and res.osx_p[6] ne 12 and res.vf_lpwid gt 2.3 and $
+    res.bk_bf_flag eq 1,ngdnn)
+
+  ;  Added in GOES restrictiond of "good" events
+  gsgdth=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
+    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e2 and $
+    res.osx_p[1] gt 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 $
+    and res.bk_bf_flag eq 1 and res.gflx_bs gt 0. and bs.sb48 gt 3. and $
+    tems.em ne tems[1].em and tems.tmk gt 4.0 and tems.tmk lt 20. and tems.bsub eq 1$
+    and tems.em lt gfit ,ngd)
+  gsgdnn=where((res.vf_qflag eq 0.  or  res.vf_qflag eq 8.) and rat lt 1 $
+    and res.osx_p[0] ne 1e-5 and res.osx_p[0] ne 1e-2 and $
+    res.osx_p[1] ne 5. and res.osx_p[1] ne 11. and res.vf_lpwid gt 2.3 $
+    and res.gflx_bs gt 0. and bs.sb48 gt 3. and $
+    tems.em ne tems[1].em and tems.tmk gt 4.0 and tems.tmk lt 20. and tems.bsub eq 1$
+    and tems.em lt gfit and res.osx_p[3] ne 1e-5 and bs.sb612 gt 3.0 and $
+    res.osx_p[5] ne 20 and res.osx_p[5] gt 7.2 and abs(res.osx_p[5]-7.16) gt 0.1 and res.osx_p[5] ne 9. and $
+    res.osx_p[6] ne 2 and res.osx_p[6] ne 12,ngdnn)
+
+  ec=eb2ec(res.osx_p[5],res.osx_p[6])
+
+  nf=n_elements(res.osx_p[3])
+  ph4_8=dblarr(nf)
+  ph12=dblarr(nf)
+  for i=0, nf-1 do begin
+    ph4_8[i]=f_vth([4,8],[res[i].osx_p[0],res[i].osx_p[1]*0.086164])
+    ph12[i]=f_bpow([12.],res[i].osx_p[3:6])
+  endfor
+  
+;  resout.fpeak_tr=anytim(resout.fpeak_tr,/ccsds)
+;  resout.bk_bf_tr=anytim(resout.bk_bf_tr,/ccsds)
+;  resout.bk_af_tr=anytim(resout.bk_af_tr,/ccsds)
+
+  rr={fstart:anytim(res.fstart,/ccsds),fend:anytim(res.fend,/ccsds),fpeak:anytim(res.fpeak,/ccsds),$
+    fpeak_tr:anytim(res.fpeak_tr,/ccsds),bk_bf_tr:anytim(res.bk_bf_tr,/ccsds),$
+    tmk:res.osx_p[1],em:res.osx_p[0]*1d49,$
+    norm:res.osx_p[3],g1:1.5,eb:res.osx_p[5],g2:res.osx_p[6],$
+    ec:ec,ph4_8:ph4_8,ph12:ph12,vol:res.vf_vol,vflx4_8:res.vf_fit.srcflux,vx:res.vf_fit.srcx,vy:res.vf_fit.srcy,$
+    gflx_bs:res.gflx_bs,gtmk:tems.tmk,gem:tems.em,$
+    eng_th:res.eng_th,eng_nn:res.eng_nn,$
+    idgdth:gdth,idgdnn:gdnn,idgsgdth:gsgdth,idgsgdnn:gsgdnn}
+
+  savegen,file='wee_all.genx',rr
+  
+  stop
 
   ;;; *******************************************
   ;;; *******************************************
