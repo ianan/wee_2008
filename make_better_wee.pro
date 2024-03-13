@@ -7,6 +7,7 @@ pro make_better_wee
   ;
   ;
   ; 28-Feb-2024 IGH
+  ; 13-Mar-2024 Add in vol error calc, but some len and wid err missing
 
   ; ospex correct in this one
   restgen,file='~/Desktop/wee_2007_bkhd/mf_ell2.genx',res
@@ -67,6 +68,12 @@ pro make_better_wee
   new_vol=!PI*rad^2*len*(725d5)^3
   new_ength=3*sqrt(em*new_vol)*kb*tk*1d7
 
+  ; Do I actually trust these.... probably not
+  raderr=rv.vf_lpwiderr*0.5
+  lenerr=rv.vf_lparcerr
+  rpart=(2*rad*len*raderr)^2
+  lpart=(rad^2*lenerr)^2
+  new_volerr=!PI*(rpart+lpart)^0.5*(725d5)^3
 
   ; Check fin_newel non-therm pow is same as save
   ; and also calc using "Ec" instead of eps_B
@@ -171,7 +178,7 @@ pro make_better_wee
     tmk:res.osx_p[1],em:res.osx_p[0]*1d49,$
     norm:res.osx_p[3],f_1:f_1out,g1:1.5,eb:res.osx_p[5],g2:res.osx_p[6],ec:ec,$
     ph4_8:ph4_8,ph12:ph12,$
-    vol:new_vol,lp_len:rv.vf_lparc, lp_wid:rv.vf_lpwid, lp_qflag:rv.vf_qflag,vx:rv.vf_fit.srcx,vy:rv.vf_fit.srcy,$
+    vol:new_vol,volerr:new_volerr,lp_len:rv.vf_lparc, lp_wid:rv.vf_lpwid, lp_qflag:rv.vf_qflag,vx:rv.vf_fit.srcx,vy:rv.vf_fit.srcy,$
     gflx:res.gflx,gflx_bs:res.gflx_bs,gtmk:tems.tmk,gem:tems.em,$
     eng_th:new_ength,eng_nn_eb:res.eng_nn, eng_nn_ec:ee_nn_ec,$
     idgdth:gdth,idgdnn:gdnn,idgsgdth:gsgdth,idgsgdnn:gsgdnn}
